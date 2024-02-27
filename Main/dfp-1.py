@@ -11,7 +11,7 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Configure database connection URI
-DB_URI = "mysql://root:ayush123@localhost/data_flow_pro"
+DB_URI = "mysql://root:chetan@localhost:3306/data_flow_pro"
 
 # Initialize SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
