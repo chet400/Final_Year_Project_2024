@@ -39,7 +39,7 @@ app.get('/data', (req, res) => {
   });
 });
 app.get('/data/:id', (req, res) => {
-    console.log("Debugging")
+  
     const id = req.params.id;
     connection.query('SELECT * FROM data WHERE id = ?', [id], (err, results) => {
       if (err) {
@@ -55,11 +55,23 @@ app.get('/data/:id', (req, res) => {
     });
   });
   
-app.post('/data', (req, res) => {
+  app.post('/data', (req, res) => {
     const { table, data } = req.body;
-    const columns = Object.keys(data).join(',');
-    const values = Object.values(data).map(value => `'${value}'`).join(',');
-    const query = `INSERT INTO ${table} (${columns}) VALUES (${values})`;
+    const columns = Object.keys(data).map(column => {
+        // Enclose column names with whitespace or integers in backticks
+        if (!isNaN(column) || column.includes(' ')) {
+            return `\`${column}\``;
+        }
+        return column;
+    }).join(',');
+    const values = Object.values(data).map(value => {
+        // Escape single quotes in values
+        if (typeof value === 'string') {
+            return `'${value.replace(/'/g, "''")}'`;
+        }
+        return value;
+    }).join(',');
+    const query = `INSERT INTO \`${table}\` (${columns}) VALUES (${values})`;
     console.log({table},{columns},{values})
     connection.query(query, (err, result) => {
       if (err) {
@@ -71,27 +83,81 @@ app.post('/data', (req, res) => {
     });
   });
 
+
+
   
-  app.put('/data/:id', (req, res) => {
-    const { id } = req.params;
-    const { key, value } = req.body;
-    console.log("body",req.body)
-    if (!key || !value) {
-        res.status(400).send('Key and value are required for updating');
-        return;
+//   app.put('/data/:id', (req, res) => {
+//     const { id } = req.params;
+//     const { key, value } = req.body;
+//     console.log("body",req.body)
+//     if (!key || !value) {
+//       console.log("Key not found")
+//       res.status(400).send('Key and value are required for updating');
+      
+//   }
+   
+
+//     const query = `UPDATE data SET ${key} = '${value}' WHERE id = ${id}`;
+//     console.log(query)
+//     connection.query(query, (err, result) => {
+//         if (err) {
+//             console.error('Error executing query: ' + err.stack);
+//             res.status(500).send('Error updating data');
+//             return;
+//         }
+//         res.json({ message: 'Data updated successfully' });
+//     });
+// });
+
+app.put('/data/:id', (req, res) => {
+  const { id } = req.params;
+  const { data } = req.body;
+
+  if (!data || Object.keys(data).length === 0) {
+    res.status(400).json({ message: "No data provided" });
+    return;
+  }
+
+  let updateColumns = '';
+  Object.entries(data).forEach(([key, value], index) => {
+    if (index > 0) {
+      updateColumns += ', ';
     }
+    updateColumns += `${key} = '${value}'`;
+  });
 
-    const query = `UPDATE data SET ${key} = '${value}' WHERE id = ${id}`;
+  const query = `UPDATE data SET ${updateColumns} WHERE id = ${id}`;
 
-    connection.query(query, (err, result) => {
-        if (err) {
-            console.error('Error executing query: ' + err.stack);
-            res.status(500).send('Error updating data');
-            return;
-        }
-        res.json({ message: 'Data updated successfully' });
-    });
+  connection.query(query, (err, result) => {
+    if (err) {
+      console.error('Error executing query: ' + err.stack);
+      res.status(500).send('Error updating data');
+      return;
+    }
+    res.json({ message: 'Data updated successfully' });
+  });
 });
+
+// app.put('/data/:id', (req, res) => {
+//   const { id } = req.params;
+//   const { key, value } = req.body;
+//   console.log("body",req.body)
+//   if(!key || !value){
+//     res.status(400).json({message:"Key value error"});
+
+//   }
+
+//   const query = `UPDATE data SET ${key} = '${value}' WHERE id = ${id}`;
+
+//   connection.query(query, (err, result) => {
+//       if (err) {
+//           console.error('Error executing query: ' + err.stack);
+//           res.status(500).send('Error updating data');
+//           return;
+//       }
+//       res.json({ message: 'Data updated successfully' });
+//   });
+// });
 
 
   app.delete('/data/:id', (req, res) => {

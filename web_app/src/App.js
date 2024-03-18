@@ -47,6 +47,7 @@ const App = () => {
         const [key, value] = item.split('=').map(part => part.trim());
         return [key, value];
     }));
+    console.log(newData)
     
     fetch(`http://localhost:3301/data/${id}`, {
         method: 'PUT',
